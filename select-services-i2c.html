@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Select services</title>
+<style>
+  :root {
+    --navy: #0B2A4A;
+    --navy-800: #0A2440;
+    --cyan: #0EA5C4;
+    --cyan-100: #E4F6FA;
+    --cyan-600: #0B87A2;
+    --danger: #C4331E;
+    --danger-bg: #FBEAE7;
+    --border: #E1E5EA;
+    --border-strong: #C7CED6;
+    --text-primary: #1A2733;
+    --text-secondary: #5B6B79;
+    --text-muted: #8B97A3;
+    --surface: #FFFFFF;
+    --surface-1: #F6F8FA;
+    --page-bg: #F3F5F7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--page-bg);
+    margin: 0;
+    color: var(--text-primary);
+  }
+
+  /* ---- top dashboard bar (unchanged shell) ---- */
+  .topbar {
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .topbar .brand {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--navy);
+  }
+  .topbar .right {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    color: var(--navy);
+  }
+  .icon-btn { position: relative; display: flex; align-items: center; }
+  .badge {
+    position: absolute; top: -8px; right: -10px;
+    background: #E0453B; color: #fff;
+    font-size: 10px; font-weight: 600;
+    border-radius: 999px; padding: 1px 5px;
+    line-height: 1.4;
+  }
+  .user-chip { display: flex; align-items: center; gap: 6px; font-weight: 500; font-size: 14px; }
+
+  /* ---- page body ---- */
+  .page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 32px 60px;
+  }
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 500; color: var(--navy);
+    margin-bottom: 14px; cursor: pointer;
+  }
+  h1.page-title {
+    font-size: 24px; font-weight: 700; color: var(--navy);
+    margin: 0 0 14px;
+  }
+  .breadcrumb-row {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+    padding-bottom: 16px; margin-bottom: 22px;
+    border-bottom: 1px solid var(--border);
+  }
+  .breadcrumb {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+    font-size: 13px; color: var(--text-muted);
+  }
+  .breadcrumb .sep { color: var(--border-strong); }
+  .breadcrumb .pill {
+    background: var(--navy); color: #fff;
+    font-size: 12px; font-weight: 600;
+    padding: 3px 11px; border-radius: 12px;
+  }
+  .switch-link {
+    font-size: 13px; font-weight: 500; color: var(--cyan-600);
+    border: 1px solid var(--cyan);
+    border-radius: 8px; padding: 8px 14px;
+    text-decoration: none; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .switch-link:hover { background: var(--cyan-100); }
+
+  /* ---- config card ---- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-header h2 {
+    font-size: 16px; font-weight: 700; color: var(--navy); margin: 0;
+  }
+  .card-body { padding: 20px 24px 24px; }
+
+  .section-label {
+    font-size: 13px; color: var(--text-secondary); margin-bottom: 10px;
+  }
+  .section-label .hint { color: var(--text-muted); }
+
+  .lock-note {
+    display: none;
+    align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  .lock-note.visible { display: flex; }
+
+  .group {
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    transition: opacity 0.15s ease, background 0.15s ease;
+  }
+  .group.locked {
+    opacity: 0.45;
+    background: var(--surface-1);
+  }
+  .group-label {
+    font-size: 12px; font-weight: 700; color: var(--navy);
+    letter-spacing: 0.03em; text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 8px;
+  }
+  .option {
+    display: flex; align-items: center; gap: 7px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13.5px;
+    background: var(--surface);
+    cursor: pointer;
+    transition: background 0.1s ease, border-color 0.1s ease;
+  }
+  .option:hover:not(.disabled) { border-color: var(--border-strong); }
+  .option.checked { background: var(--cyan-100); border-color: var(--cyan); }
+  .option.disabled { cursor: not-allowed; color: var(--text-muted); }
+  .option input[type="checkbox"] {
+    width: 15px; height: 15px; accent-color: var(--cyan); flex-shrink: 0;
+  }
+
+  .ptq-note {
+    display: none;
+    margin-top: 6px;
+    padding: 12px 14px;
+    background: var(--cyan-100);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--navy);
+    line-height: 1.6;
+  }
+  .ptq-note.visible { display: block; }
+
+  .proto-error {
+    display: none;
+    align-items: center; gap: 6px;
+    font-size: 12.5px; color: var(--danger);
+    background: var(--danger-bg);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-top: 10px;
+  }
+  .proto-error.visible { display: flex; }
+
+  .device-block {
+    padding-top: 22px;
+    margin-top: 20px;
+    border-top: 1px solid var(--border);
+    max-width: 340px;
+    display: grid;
+    gap: 6px;
+  }
+  .device-block label { font-size: 13px; color: var(--text-secondary); }
+  .device-block .required { font-weight: 600; color: var(--danger); }
+  select {
+    height: 38px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0 10px;
+    font-size: 13.5px;
+    font-family: inherit;
+    color: var(--text-primary);
+    background: var(--surface);
+  }
+  select:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px var(--cyan-100); }
+
+  .footer-actions {
+    display: flex; justify-content: flex-end; gap: 10px;
+    margin-top: 20px;
+  }
+  button {
+    font-family: inherit;
+    font-size: 14px; font-weight: 500;
+    border-radius: 8px;
+    padding: 10px 18px;
+    cursor: pointer;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text-primary);
+  }
+  button:hover { background: var(--surface-1); }
+  .btn-primary {
+    background: var(--navy); border-color: var(--navy); color: #fff;
+  }
+  .btn-primary:hover { background: var(--navy-800); }
+
+  .success-banner {
+    display: none;
+    max-width: 1100px;
+    margin: 16px auto 0;
+    font-size: 13px;
+    color: #0F6E56;
+    background: #E1F5EE;
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .success-banner.visible { display: block; }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+</style>
+</head>
+<body>
+
+<h2 class="sr-only">Select services page for I2C protocol validation: protocol category checkboxes with cross-category lockout, a pre-test questionnaire notice for I2C, a required device selector, and validated continue action.</h2>
+
+<!-- dashboard shell, unchanged -->
+<div class="topbar">
+  <div class="brand">Dashboard</div>
+  <div class="right">
+    <div class="icon-btn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="badge">46</span>
+    </div>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+    <div class="user-chip">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+      Dinesh
+    </div>
+  </div>
+</div>
+
+<div class="page">
+
+  <div class="back-link">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Back
+  </div>
+
+  <h1 class="page-title">Select services</h1>
+
+  <div class="breadcrumb-row">
+    <div class="breadcrumb">
+      <span>Functionality sandbox</span><span class="sep">&gt;</span>
+      <span>Functionality testing</span><span class="sep">&gt;</span>
+      <span>Protocol validation</span><span class="sep">&gt;</span>
+      <span class="pill">I&sup2;C</span>
+    </div>
+    <a href="#" class="switch-link" id="switchLink">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      Looking for EMI/EMC testing? Switch here
+    </a>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+
+      <div class="section-label">
+        Protocol requirements <span class="hint">— you can select multiple protocols, but only from one category per order</span>
+      </div>
+
+      <div class="lock-note" id="lockNote">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="1"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        <span>One category per device — clear your selection to switch.</span>
+      </div>
+
+      <div id="groups"></div>
+
+      <div class="ptq-note" id="ptqNote">
+        I&sup2;C testing is configured through a Pre-Test Questionnaire (PTQ) instead of individual test cases. Complete the PTQ below &mdash; testers will use your responses to configure the test.
+      </div>
+
+      <div class="proto-error" id="protoError">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>Select at least one protocol to continue.</span>
+      </div>
+
+      <div class="device-block">
+        <label>Select device <span class="required" id="deviceReqLabel">(required to proceed)</span></label>
+        <select id="deviceSelect">
+          <option value="">-- choose registered device --</option>
+          <option value="a1">Device A1 — ESP32 sensor node</option>
+          <option value="a2">Device A2 — RFID gateway</option>
+        </select>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="footer-actions">
+    <button type="button" id="clearBtn">Clear selection</button>
+    <button type="button" id="continueBtn" class="btn-primary">Continue</button>
+  </div>
+
+</div>
+
+<div class="success-banner" id="successBanner"></div>
+
+<script>
+const data = [
+  { id: 'iot', label: 'IoT protocol validation', items: [
+    { id: 'coap', label: 'CoAP' },
+    { id: 'mqtt', label: 'MQTT' },
+    { id: 'zigbee', label: 'Zigbee' }
+  ]},
+  { id: 'emb', label: 'Embedded protocol validation', items: [
+    { id: 'i2c', label: 'I\u00b2C', ptq: true },
+    { id: 'uart', label: 'UART' },
+    { id: 'spi', label: 'SPI' },
+    { id: 'can', label: 'CAN' },
+    { id: 'lin', label: 'LIN' }
+  ]}
+];
+
+const state = {};
+data.forEach(g => g.items.forEach(it => state[it.id] = it.id === 'i2c')); // I2C pre-selected to match current screen
+
+const groupsEl = document.getElementById('groups');
+const lockNote = document.getElementById('lockNote');
+const ptqNote = document.getElementById('ptqNote');
+const protoError = document.getElementById('protoError');
+const deviceSelect = document.getElementById('deviceSelect');
+const deviceReqLabel = document.getElementById('deviceReqLabel');
+const successBanner = document.getElementById('successBanner');
+
+function activeGroupId() {
+  for (const g of data) {
+    if (g.items.some(it => state[it.id])) return g.id;
+  }
+  return null;
+}
+
+function hasPtqSelected() {
+  return data.some(g => g.items.some(it => it.ptq && state[it.id]));
+}
+
+function selectedLabels() {
+  const active = activeGroupId();
+  if (!active) return [];
+  const g = data.find(x => x.id === active);
+  return g.items.filter(it => state[it.id]).map(it => it.label);
+}
+
+function render() {
+  const active = activeGroupId();
+  lockNote.classList.toggle('visible', active !== null);
+  ptqNote.classList.toggle('visible', hasPtqSelected());
+
+  groupsEl.innerHTML = '';
+
+  data.forEach(g => {
+    const locked = active !== null && active !== g.id;
+
+    const gDiv = document.createElement('div');
+    gDiv.className = 'group' + (locked ? ' locked' : '');
+
+    const head = document.createElement('div');
+    head.className = 'group-label';
+    head.textContent = g.label;
+    gDiv.appendChild(head);
+
+    const grid = document.createElement('div');
+    grid.className = 'options';
+
+    g.items.forEach(it => {
+      const row = document.createElement('label');
+      row.className = 'option' + (state[it.id] ? ' checked' : '') + (locked ? ' disabled' : '');
+
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = state[it.id];
+      cb.disabled = locked;
+      cb.setAttribute('aria-label', it.label);
+      cb.addEventListener('change', () => {
+        state[it.id] = cb.checked;
+        protoError.classList.remove('visible');
+        successBanner.classList.remove('visible');
+        render();
+      });
+
+      const span = document.createElement('span');
+      span.textContent = it.label;
+
+      row.appendChild(cb);
+      row.appendChild(span);
+      grid.appendChild(row);
+    });
+
+    gDiv.appendChild(grid);
+    groupsEl.appendChild(gDiv);
+  });
+}
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  Object.keys(state).forEach(k => state[k] = false);
+  protoError.classList.remove('visible');
+  successBanner.classList.remove('visible');
+  render();
+});
+
+document.getElementById('continueBtn').addEventListener('click', () => {
+  const anySelected = Object.values(state).some(v => v);
+  const deviceOk = deviceSelect.value !== '';
+  let ok = true;
+
+  if (!anySelected) {
+    protoError.classList.add('visible');
+    ok = false;
+  } else {
+    protoError.classList.remove('visible');
+  }
+
+  if (!deviceOk) {
+    deviceReqLabel.style.textDecoration = 'underline';
+    ok = false;
+  } else {
+    deviceReqLabel.style.textDecoration = 'none';
+  }
+
+  if (ok) {
+    const active = data.find(g => g.id === activeGroupId());
+    const chosen = selectedLabels();
+    const deviceLabel = deviceSelect.options[deviceSelect.selectedIndex].text;
+    successBanner.textContent = 'Continuing with ' + active.label + ': ' + chosen.join(', ') + ' — device: ' + deviceLabel + '.';
+    successBanner.classList.add('visible');
+  } else {
+    successBanner.classList.remove('visible');
+  }
+});
+
+deviceSelect.addEventListener('change', () => {
+  if (deviceSelect.value !== '') {
+    deviceReqLabel.style.textDecoration = 'none';
+  }
+});
+
+render();
+</script>
+
+</body>
+</html>
